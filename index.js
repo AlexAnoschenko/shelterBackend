@@ -8,8 +8,6 @@ const WSServer = require('express-ws')(app);
 const aWss = WSServer.getWss();
 const roomsRouters = require('./routers/roomsRouter');
 const cardsRouters = require('./routers/cardsRouter');
-const Room = require('./models/room');
-const Card = require('./models/card');
 const {
   connectionHandler,
   addUserHandler,
