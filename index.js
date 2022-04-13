@@ -12,6 +12,8 @@ const {
   connectionHandler,
   addUserHandler,
   openCardHandler,
+  openSpecialExchangeCardHandler,
+  openSpecialShuffleCardHandler,
 } = require('./utils/sockets');
 
 dotenv.config();
@@ -35,6 +37,14 @@ app.ws('/', (ws, req) => {
 
       case 'openCard':
         openCardHandler(ws, msg, aWss);
+        break;
+
+      // case 'openSpecialExchangeCard':
+      //   openSpecialExchangeCardHandler(ws, msg, aWss);
+      //   break;
+
+      case 'openSpecialShuffleCard':
+        openSpecialShuffleCardHandler(ws, msg, aWss);
         break;
     }
   });

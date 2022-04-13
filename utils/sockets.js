@@ -1,5 +1,6 @@
 const Room = require('../models/room');
 const Card = require('../models/card');
+const SpecialConditionCards = require('../models/specialConditionCards');
 const Shelter = require('../models/shelter');
 const Apocalypse = require('../models/apocalypse');
 const { shuffle } = require('./services');
@@ -21,6 +22,14 @@ function addUserHandler(ws, msg, aWss) {
             room.users[userIndex].cards.push(type[key].shift());
           }
         });
+      });
+
+      const specialConditionCards = await SpecialConditionCards.find({});
+      shuffle(specialConditionCards[0].specialConditionCards);
+      room.users.forEach((user, userIndex) => {
+        room.users[userIndex].specialConditionCards.push(
+          ...specialConditionCards[0].specialConditionCards.splice(0, 2)
+        );
       });
 
       const shelters = await Shelter.find({});
@@ -68,6 +77,47 @@ function openCardHandler(ws, msg, aWss) {
   });
 }
 
+function openSpecialExchangeCardHandler(ws, msg, aWss) {}
+
+function openSpecialShuffleCardHandler(ws, msg, aWss) {
+  let shuffledCards = [];
+  Room.findById(msg.id).then(async (room) => {
+    room.users.forEach((user) => {
+      user.cards.forEach((card, index) => {
+        if (card.type === msg.user.card.changeType) {
+          user.cards.splice(index, 1);
+          shuffledCards.push(card);
+        }
+      });
+
+      if (msg.user.userId === user.userId) {
+        user.specialConditionCards.forEach((card) => {
+          if (String(card.id) === msg.user.card.id) {
+            card.isVisible = true;
+          }
+        });
+      }
+    });
+
+    shuffle(shuffledCards);
+
+    room.users.forEach((user, userIndex) => {
+      room.users[userIndex].cards.push(shuffledCards.shift());
+    });
+
+    await Room.findOneAndUpdate(
+      { _id: msg.id },
+      {
+        $set: {
+          users: room.users,
+        },
+      }
+    ).clone();
+
+    broadcastConnection(ws, msg, aWss, room);
+  });
+}
+
 const broadcastConnection = (ws, msg, aWss, response) => {
   ws.id = msg.id;
   aWss.clients.forEach((client) => {
@@ -81,4 +131,6 @@ module.exports = {
   connectionHandler,
   addUserHandler,
   openCardHandler,
+  openSpecialExchangeCardHandler,
+  openSpecialShuffleCardHandler,
 };
