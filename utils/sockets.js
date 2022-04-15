@@ -135,6 +135,43 @@ function openSpecialExchangeCardHandler(ws, msg, aWss) {
   });
 }
 
+function openSpecialOpeningCardHandler(ws, msg, aWss) {
+  Room.findById(msg.id).then(async (room) => {
+    room.users.forEach((user) => {
+      if (msg.user.userId === user.userId) {
+        user.specialConditionCards.forEach((card) => {
+          if (String(card.id) === msg.user.card.id) {
+            card.isVisible = true;
+          }
+        });
+      }
+
+      if (msg.selectedUser.userId === user.userId) {
+        user.cards.forEach((card) => {
+          if (card.type === msg.user.card.changeType) {
+            card.isVisible = true;
+          }
+        });
+      }
+    });
+
+    room.users.forEach((user) => {
+      user.cards.sort(sortCards);
+    });
+
+    await Room.findOneAndUpdate(
+      { _id: msg.id },
+      {
+        $set: {
+          users: room.users,
+        },
+      }
+    ).clone();
+
+    broadcastConnection(ws, msg, aWss, room);
+  });
+}
+
 function openSpecialShuffleCardHandler(ws, msg, aWss) {
   let shuffledCards = [];
   Room.findById(msg.id).then(async (room) => {
@@ -190,5 +227,6 @@ module.exports = {
   addUserHandler,
   openCardHandler,
   openSpecialExchangeCardHandler,
+  openSpecialOpeningCardHandler,
   openSpecialShuffleCardHandler,
 };

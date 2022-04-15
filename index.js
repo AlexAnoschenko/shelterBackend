@@ -13,6 +13,7 @@ const {
   addUserHandler,
   openCardHandler,
   openSpecialExchangeCardHandler,
+  openSpecialOpeningCardHandler,
   openSpecialShuffleCardHandler,
 } = require('./utils/sockets');
 
@@ -41,6 +42,10 @@ app.ws('/', (ws, req) => {
 
       case 'openSpecialExchangeCard':
         openSpecialExchangeCardHandler(ws, msg, aWss);
+        break;
+
+      case 'openSpecialOpeningCard':
+        openSpecialOpeningCardHandler(ws, msg, aWss);
         break;
 
       case 'openSpecialShuffleCard':
