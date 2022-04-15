@@ -1,8 +1,9 @@
 const Room = require('../models/room');
 const Card = require('../models/card');
+const SpecialConditionCards = require('../models/specialConditionCards');
 const Shelter = require('../models/shelter');
 const Apocalypse = require('../models/apocalypse');
-const { shuffle } = require('./services');
+const { shuffle, sortCards } = require('./services');
 
 function connectionHandler(ws, msg, aWss) {
   broadcastConnection(ws, msg, aWss, `user ${msg.nickname} connected`);
@@ -21,6 +22,16 @@ function addUserHandler(ws, msg, aWss) {
             room.users[userIndex].cards.push(type[key].shift());
           }
         });
+      });
+
+      const specialConditionCards = await SpecialConditionCards.find({});
+      shuffle(specialConditionCards[0].specialConditionCards);
+      room.users.forEach((user, userIndex) => {
+        room.users[userIndex].specialConditionCards.push(
+          ...specialConditionCards[0].specialConditionCards.splice(0, 2)
+        );
+
+        user.cards.sort(sortCards);
       });
 
       const shelters = await Shelter.find({});
@@ -68,6 +79,140 @@ function openCardHandler(ws, msg, aWss) {
   });
 }
 
+function openSpecialExchangeCardHandler(ws, msg, aWss) {
+  let firstCard = null;
+  let secondCard = null;
+
+  Room.findById(msg.id).then(async (room) => {
+    room.users.forEach((user) => {
+      if (user.userId === msg.user.userId) {
+        user.cards.forEach((card, index) => {
+          if (card.type === msg.user.card.changeType) {
+            firstCard = user.cards.splice(index, 1)[0];
+          }
+        });
+      }
+
+      if (user.userId === msg.selectedUser.userId) {
+        user.cards.forEach((card, index) => {
+          if (card.type === msg.user.card.changeType) {
+            secondCard = user.cards.splice(index, 1)[0];
+          }
+        });
+      }
+
+      if (msg.user.userId === user.userId) {
+        user.specialConditionCards.forEach((card) => {
+          if (String(card.id) === msg.user.card.id) {
+            card.isVisible = true;
+          }
+        });
+      }
+    });
+
+    room.users.forEach((user) => {
+      if (user.userId === msg.user.userId) {
+        user.cards.push(secondCard);
+      }
+
+      if (user.userId === msg.selectedUser.userId) {
+        user.cards.push(firstCard);
+      }
+
+      user.cards.sort(sortCards);
+    });
+
+    await Room.findOneAndUpdate(
+      { _id: msg.id },
+      {
+        $set: {
+          users: room.users,
+        },
+      }
+    ).clone();
+
+    broadcastConnection(ws, msg, aWss, room);
+  });
+}
+
+function openSpecialOpeningCardHandler(ws, msg, aWss) {
+  Room.findById(msg.id).then(async (room) => {
+    room.users.forEach((user) => {
+      if (msg.user.userId === user.userId) {
+        user.specialConditionCards.forEach((card) => {
+          if (String(card.id) === msg.user.card.id) {
+            card.isVisible = true;
+          }
+        });
+      }
+
+      if (msg.selectedUser.userId === user.userId) {
+        user.cards.forEach((card) => {
+          if (card.type === msg.user.card.changeType) {
+            card.isVisible = true;
+          }
+        });
+      }
+    });
+
+    room.users.forEach((user) => {
+      user.cards.sort(sortCards);
+    });
+
+    await Room.findOneAndUpdate(
+      { _id: msg.id },
+      {
+        $set: {
+          users: room.users,
+        },
+      }
+    ).clone();
+
+    broadcastConnection(ws, msg, aWss, room);
+  });
+}
+
+function openSpecialShuffleCardHandler(ws, msg, aWss) {
+  let shuffledCards = [];
+  Room.findById(msg.id).then(async (room) => {
+    room.users.forEach((user) => {
+      user.cards.forEach((card, index) => {
+        if (card.type === msg.user.card.changeType) {
+          user.cards.splice(index, 1);
+          shuffledCards.push(card);
+        }
+      });
+
+      if (msg.user.userId === user.userId) {
+        user.specialConditionCards.forEach((card) => {
+          if (String(card.id) === msg.user.card.id) {
+            card.isVisible = true;
+          }
+        });
+      }
+    });
+
+    shuffle(shuffledCards);
+
+    room.users.forEach((user, userIndex) => {
+      room.users[userIndex].cards.push(shuffledCards.shift());
+
+      user.cards.sort(sortCards);
+    });
+
+    await Room.findOneAndUpdate(
+      { _id: msg.id },
+      {
+        $set: {
+          users: room.users,
+        },
+      }
+    ).clone();
+
+    broadcastConnection(ws, msg, aWss, room);
+  });
+}
+
 const broadcastConnection = (ws, msg, aWss, response) => {
   ws.id = msg.id;
   aWss.clients.forEach((client) => {
@@ -81,4 +226,7 @@ module.exports = {
   connectionHandler,
   addUserHandler,
   openCardHandler,
+  openSpecialExchangeCardHandler,
+  openSpecialOpeningCardHandler,
+  openSpecialShuffleCardHandler,
 };

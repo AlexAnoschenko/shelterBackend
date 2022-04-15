@@ -5,4 +5,14 @@ function shuffle(array) {
   }
 }
 
-module.exports = { shuffle };
+function sortCards(a, b) {
+  if (a.type > b.type) {
+    return 1;
+  }
+  if (a.type < b.type) {
+    return -1;
+  }
+  return 0;
+}
+
+module.exports = { shuffle, sortCards };

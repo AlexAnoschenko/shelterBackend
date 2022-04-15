@@ -15,6 +15,7 @@ class roomsController {
             role: 'admin',
             nickname: nickname,
             cards: [],
+            specialConditionCards: [],
           },
         ],
         shelter: null,
@@ -31,6 +32,7 @@ class roomsController {
           role: room.users[0].role,
           nickname: nickname,
           cards: [],
+          specialConditionCards: [],
         },
         shelter: null,
         apocalypse: null,
@@ -56,6 +58,7 @@ class roomsController {
               role: 'player',
               nickname: nickname,
               cards: [],
+              specialConditionCards: [],
             },
           },
         },
@@ -67,6 +70,7 @@ class roomsController {
               role: 'player',
               nickname: nickname,
               cards: [],
+              specialConditionCards: [],
             },
           });
         }
