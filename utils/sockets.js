@@ -52,7 +52,7 @@ function addUserHandler(ws, msg, aWss) {
         }
       ).clone();
     }
-    broadcastConnection(ws, msg, aWss, room);
+    broadcastConnection(ws, msg, aWss, { room: room });
   });
 }
 
@@ -75,7 +75,14 @@ function openCardHandler(ws, msg, aWss) {
         });
       }
     });
-    broadcastConnection(ws, msg, aWss, room);
+
+    broadcastConnection(ws, msg, aWss, {
+      room: room,
+      method: 'snackbar',
+      snackbar: `${
+        msg.user.nickname
+      } opened his ${msg.user.card.type.toUpperCase()}!`,
+    });
   });
 }
 
@@ -131,7 +138,15 @@ function openSpecialExchangeCardHandler(ws, msg, aWss) {
       }
     ).clone();
 
-    broadcastConnection(ws, msg, aWss, room);
+    broadcastConnection(ws, msg, aWss, {
+      room: room,
+      method: 'snackbar',
+      snackbar: `${
+        msg.user.nickname
+      } exchanged ${msg.user.card.changeType.toUpperCase()} with ${
+        msg.selectedUser.nickname
+      }!`,
+    });
   });
 }
 
@@ -168,7 +183,13 @@ function openSpecialOpeningCardHandler(ws, msg, aWss) {
       }
     ).clone();
 
-    broadcastConnection(ws, msg, aWss, room);
+    broadcastConnection(ws, msg, aWss, {
+      room: room,
+      method: 'snackbar',
+      snackbar: `${msg.user.nickname} opened ${
+        msg.selectedUser.nickname
+      }'s ${msg.user.card.changeType.toUpperCase()}!`,
+    });
   });
 }
 
@@ -209,7 +230,13 @@ function openSpecialShuffleCardHandler(ws, msg, aWss) {
       }
     ).clone();
 
-    broadcastConnection(ws, msg, aWss, room);
+    broadcastConnection(ws, msg, aWss, {
+      room: room,
+      method: 'snackbar',
+      snackbar: `${
+        msg.user.nickname
+      } shuffled all ${msg.user.card.changeType.toUpperCase()}!`,
+    });
   });
 }
 
