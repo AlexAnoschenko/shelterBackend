@@ -240,6 +240,27 @@ function openSpecialShuffleCardHandler(ws, msg, aWss) {
   });
 }
 
+function openVotingModalAllHandler(ws, msg, aWss) {
+  broadcastConnection(ws, msg, aWss, { method: 'openVotingModalAll' });
+}
+
+// --------------------------------------------------------------- RESULT
+function getVotingResultHandler(ws, msg, aWss) {
+  const result = [];
+  Room.findById(msg.id).then(async (room) => {
+    room.user.forEach((user) => {});
+
+    // await Room.findOneAndUpdate(
+    //   { _id: msg.id },
+    //   {
+    //     $set: {
+    //       users: room.users,
+    //     },
+    //   }
+    // ).clone();
+  });
+}
+
 const broadcastConnection = (ws, msg, aWss, response) => {
   ws.id = msg.id;
   aWss.clients.forEach((client) => {
@@ -256,4 +277,6 @@ module.exports = {
   openSpecialExchangeCardHandler,
   openSpecialOpeningCardHandler,
   openSpecialShuffleCardHandler,
+  openVotingModalAllHandler,
+  getVotingResultHandler,
 };
