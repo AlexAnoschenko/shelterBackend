@@ -241,25 +241,79 @@ function openSpecialShuffleCardHandler(ws, msg, aWss) {
 }
 
 function openVotingModalAllHandler(ws, msg, aWss) {
+  clearVotes(msg.id);
   broadcastConnection(ws, msg, aWss, { method: 'openVotingModalAll' });
 }
 
-// --------------------------------------------------------------- RESULT
 function getVotingResultHandler(ws, msg, aWss) {
-  const result = [];
-  Room.findById(msg.id).then(async (room) => {
-    room.user.forEach((user) => {});
+  let kickedOutPlayers = 0;
+  let kickedOutPlayer = null;
+  let maxVotes = 0;
 
-    // await Room.findOneAndUpdate(
-    //   { _id: msg.id },
-    //   {
-    //     $set: {
-    //       users: room.users,
-    //     },
-    //   }
-    // ).clone();
+  Room.findById(msg.id).then(async (room) => {
+    room.users.forEach((user) => {
+      if (user.votes > maxVotes) {
+        maxVotes = user.votes;
+        user.isKickedOut = true;
+        kickedOutPlayer = user.nickname;
+      }
+
+      if (user.isKickedOut) {
+        kickedOutPlayers += 1;
+      }
+    });
+
+    if (Math.ceil(room.numberOfPlayers / 2) === kickedOutPlayers) {
+      await Room.findOneAndUpdate(
+        { _id: msg.id },
+        {
+          $set: {
+            users: room.users,
+            isEndGame: true,
+          },
+        }
+      ).clone();
+
+      broadcastConnection(ws, msg, aWss, {
+        room: room,
+        kickedOutPlayer: kickedOutPlayer,
+        method: 'endGame',
+      });
+    } else {
+      await Room.findOneAndUpdate(
+        { _id: msg.id },
+        {
+          $set: {
+            users: room.users,
+          },
+        }
+      ).clone();
+
+      broadcastConnection(ws, msg, aWss, {
+        room: room,
+        kickedOutPlayer: kickedOutPlayer,
+        method: 'getVotingResult',
+      });
+    }
   });
 }
+
+const clearVotes = (id) => {
+  Room.findById(id).then(async (room) => {
+    room.users.forEach((user) => {
+      user.votes = 0;
+    });
+
+    await Room.findOneAndUpdate(
+      { _id: id },
+      {
+        $set: {
+          users: room.users,
+        },
+      }
+    ).clone();
+  });
+};
 
 const broadcastConnection = (ws, msg, aWss, response) => {
   ws.id = msg.id;

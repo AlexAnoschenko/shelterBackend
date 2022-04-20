@@ -23,6 +23,7 @@ class roomsController {
         shelter: null,
         apocalypse: null,
         numberOfPlayers: numberOfPlayers,
+        isEndGame: false,
       });
 
       await room.save();
@@ -41,6 +42,7 @@ class roomsController {
         shelter: null,
         apocalypse: null,
         numberOfPlayers: numberOfPlayers,
+        isEndGame: false,
       });
     } catch (e) {
       res.status(400).json({ message: 'Creating room error' });
