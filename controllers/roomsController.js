@@ -18,6 +18,7 @@ class roomsController {
             specialConditionCards: [],
             isKickedOut: false,
             votes: 0,
+            isVoted: false,
           },
         ],
         shelter: null,
@@ -38,6 +39,7 @@ class roomsController {
           specialConditionCards: [],
           isKickedOut: false,
           votes: 0,
+          isVoted: false,
         },
         shelter: null,
         apocalypse: null,
@@ -67,6 +69,7 @@ class roomsController {
               specialConditionCards: [],
               isKickedOut: false,
               votes: 0,
+              isVoted: false,
             },
           },
         },
@@ -81,6 +84,7 @@ class roomsController {
               specialConditionCards: [],
               isKickedOut: false,
               votes: 0,
+              isVoted: false,
             },
           });
         }
@@ -100,31 +104,6 @@ class roomsController {
     try {
       await Room.deleteMany({}, () => {
         console.log('clear');
-      });
-    } catch (e) {}
-  }
-
-  async voteUser(req, res) {
-    const { id, nickname, userId } = req.body;
-
-    try {
-      Room.findById(id).then(async (room) => {
-        room.users.forEach((user) => {
-          if (user.userId === userId) {
-            user.votes += 1;
-          }
-        });
-
-        await Room.findOneAndUpdate(
-          { _id: id },
-          {
-            $set: {
-              users: room.users,
-            },
-          }
-        ).clone();
-
-        res.json({ isVoted: true });
       });
     } catch (e) {}
   }
