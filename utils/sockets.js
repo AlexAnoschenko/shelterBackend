@@ -241,23 +241,143 @@ function openSpecialShuffleCardHandler(ws, msg, aWss) {
 }
 
 function openVotingModalAllHandler(ws, msg, aWss) {
-  broadcastConnection(ws, msg, aWss, { method: 'openVotingModalAll' });
+  Room.findById(msg.id).then(async (room) => {
+    room.isDraw = false;
+    room.users.forEach((user) => {
+      user.votes = 0;
+      user.isVoted = false;
+    });
+
+    await Room.findOneAndUpdate(
+      { _id: msg.id },
+      {
+        $set: {
+          users: room.users,
+          isDraw: false,
+        },
+      }
+    ).clone();
+
+    broadcastConnection(ws, msg, aWss, {
+      room: room,
+      method: 'openVotingModalAll',
+    });
+  });
 }
 
-// --------------------------------------------------------------- RESULT
-function getVotingResultHandler(ws, msg, aWss) {
-  const result = [];
+function votePlayerHandler(ws, msg, aWss) {
   Room.findById(msg.id).then(async (room) => {
-    room.user.forEach((user) => {});
+    room.users.forEach((user) => {
+      if (user.userId === msg.selectedUser.userId) {
+        user.votes += 1;
+      }
 
-    // await Room.findOneAndUpdate(
-    //   { _id: msg.id },
-    //   {
-    //     $set: {
-    //       users: room.users,
-    //     },
-    //   }
-    // ).clone();
+      if (user.userId === msg.player.userId) {
+        user.isVoted = true;
+      }
+    });
+
+    await Room.findOneAndUpdate(
+      { _id: msg.id },
+      {
+        $set: {
+          users: room.users,
+        },
+      }
+    ).clone();
+
+    broadcastConnection(ws, msg, aWss, {
+      room: room,
+    });
+  });
+}
+
+function getVotingResultHandler(ws, msg, aWss) {
+  let kickedOutPlayers = 0;
+  let kickedOutPlayer = null;
+  let maxVotes = 0;
+  let drawPlayers = 0;
+  const result = [];
+
+  Room.findById(msg.id).then(async (room) => {
+    room.users.forEach((user) => {
+      if (user.votes >= maxVotes) {
+        maxVotes = user.votes;
+        result.push(user);
+      }
+    });
+
+    let filteredResult = result.filter((user) => user.votes === maxVotes);
+
+    if (filteredResult.length > 1) {
+      room.isDraw = true;
+      room.drawPlayers = filteredResult;
+      room.users.forEach((user) => {
+        user.votes = 0;
+        user.isVoted = false;
+      });
+
+      await Room.findOneAndUpdate(
+        { _id: msg.id },
+        {
+          $set: {
+            users: room.users,
+            isDraw: true,
+            drawPlayers: filteredResult,
+          },
+        }
+      ).clone();
+
+      broadcastConnection(ws, msg, aWss, {
+        room: room,
+        drawPlayers: drawPlayers,
+        method: 'draw',
+      });
+    } else {
+      room.users.forEach((user) => {
+        if (user.userId === filteredResult[0].userId) {
+          user.isKickedOut = true;
+          kickedOutPlayer = filteredResult[0].nickname;
+        }
+
+        if (user.isKickedOut) {
+          kickedOutPlayers += 1;
+        }
+      });
+
+      if (Math.ceil(room.numberOfPlayers / 2) === kickedOutPlayers) {
+        await Room.findOneAndUpdate(
+          { _id: msg.id },
+          {
+            $set: {
+              users: room.users,
+              isEndGame: true,
+            },
+          }
+        ).clone();
+
+        broadcastConnection(ws, msg, aWss, {
+          room: room,
+          kickedOutPlayer: kickedOutPlayer,
+          method: 'endGame',
+        });
+      } else {
+        await Room.findOneAndUpdate(
+          { _id: msg.id },
+          {
+            $set: {
+              users: room.users,
+            },
+          }
+        ).clone();
+
+        broadcastConnection(ws, msg, aWss, {
+          room: room,
+          kickedOutPlayer: kickedOutPlayer,
+          method: 'getVotingResult',
+        });
+      }
+    }
   });
 }
 
@@ -278,5 +398,6 @@ module.exports = {
   openSpecialOpeningCardHandler,
   openSpecialShuffleCardHandler,
   openVotingModalAllHandler,
+  votePlayerHandler,
   getVotingResultHandler,
 };

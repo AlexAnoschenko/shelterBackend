@@ -16,6 +16,7 @@ const {
   openSpecialOpeningCardHandler,
   openSpecialShuffleCardHandler,
   openVotingModalAllHandler,
+  votePlayerHandler,
   getVotingResultHandler,
 } = require('./utils/sockets');
 
@@ -56,6 +57,10 @@ app.ws('/', (ws, req) => {
 
       case 'openVotingModalAll':
         openVotingModalAllHandler(ws, msg, aWss);
+        break;
+
+      case 'votePlayer':
+        votePlayerHandler(ws, msg, aWss);
         break;
 
       case 'getVotingResult':

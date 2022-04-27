@@ -18,11 +18,15 @@ class roomsController {
             specialConditionCards: [],
             isKickedOut: false,
             votes: 0,
+            isVoted: false,
           },
         ],
         shelter: null,
         apocalypse: null,
         numberOfPlayers: numberOfPlayers,
+        isEndGame: false,
+        isDraw: false,
+        drawPlayers: [],
       });
 
       await room.save();
@@ -37,10 +41,14 @@ class roomsController {
           specialConditionCards: [],
           isKickedOut: false,
           votes: 0,
+          isVoted: false,
         },
         shelter: null,
         apocalypse: null,
         numberOfPlayers: numberOfPlayers,
+        isEndGame: false,
+        isDraw: false,
+        drawPlayers: [],
       });
     } catch (e) {
       res.status(400).json({ message: 'Creating room error' });
@@ -65,6 +73,7 @@ class roomsController {
               specialConditionCards: [],
               isKickedOut: false,
               votes: 0,
+              isVoted: false,
             },
           },
         },
@@ -79,6 +88,7 @@ class roomsController {
               specialConditionCards: [],
               isKickedOut: false,
               votes: 0,
+              isVoted: false,
             },
           });
         }
@@ -98,31 +108,6 @@ class roomsController {
     try {
       await Room.deleteMany({}, () => {
         console.log('clear');
-      });
-    } catch (e) {}
-  }
-
-  async voteUser(req, res) {
-    const { id, nickname, userId } = req.body;
-
-    try {
-      Room.findById(id).then(async (room) => {
-        room.users.forEach((user) => {
-          if (user.userId === userId) {
-            user.votes += 1;
-          }
-        });
-
-        await Room.findOneAndUpdate(
-          { _id: id },
-          {
-            $set: {
-              users: room.users,
-            },
-          }
-        ).clone();
-
-        res.json({ isVoted: true });
       });
     } catch (e) {}
   }
