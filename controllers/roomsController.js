@@ -16,11 +16,17 @@ class roomsController {
             nickname: nickname,
             cards: [],
             specialConditionCards: [],
+            isKickedOut: false,
+            votes: 0,
+            isVoted: false,
           },
         ],
         shelter: null,
         apocalypse: null,
         numberOfPlayers: numberOfPlayers,
+        isEndGame: false,
+        isDraw: false,
+        drawPlayers: [],
       });
 
       await room.save();
@@ -33,10 +39,16 @@ class roomsController {
           nickname: nickname,
           cards: [],
           specialConditionCards: [],
+          isKickedOut: false,
+          votes: 0,
+          isVoted: false,
         },
         shelter: null,
         apocalypse: null,
         numberOfPlayers: numberOfPlayers,
+        isEndGame: false,
+        isDraw: false,
+        drawPlayers: [],
       });
     } catch (e) {
       res.status(400).json({ message: 'Creating room error' });
@@ -59,6 +71,9 @@ class roomsController {
               nickname: nickname,
               cards: [],
               specialConditionCards: [],
+              isKickedOut: false,
+              votes: 0,
+              isVoted: false,
             },
           },
         },
@@ -71,6 +86,9 @@ class roomsController {
               nickname: nickname,
               cards: [],
               specialConditionCards: [],
+              isKickedOut: false,
+              votes: 0,
+              isVoted: false,
             },
           });
         }

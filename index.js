@@ -15,6 +15,9 @@ const {
   openSpecialExchangeCardHandler,
   openSpecialOpeningCardHandler,
   openSpecialShuffleCardHandler,
+  openVotingModalAllHandler,
+  votePlayerHandler,
+  getVotingResultHandler,
 } = require('./utils/sockets');
 
 dotenv.config();
@@ -50,6 +53,18 @@ app.ws('/', (ws, req) => {
 
       case 'openSpecialShuffleCard':
         openSpecialShuffleCardHandler(ws, msg, aWss);
+        break;
+
+      case 'openVotingModalAll':
+        openVotingModalAllHandler(ws, msg, aWss);
+        break;
+
+      case 'votePlayer':
+        votePlayerHandler(ws, msg, aWss);
+        break;
+
+      case 'getVotingResult':
+        getVotingResultHandler(ws, msg, aWss);
         break;
     }
   });
