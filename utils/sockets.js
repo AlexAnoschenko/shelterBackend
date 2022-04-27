@@ -242,6 +242,7 @@ function openSpecialShuffleCardHandler(ws, msg, aWss) {
 
 function openVotingModalAllHandler(ws, msg, aWss) {
   Room.findById(msg.id).then(async (room) => {
+    room.isDraw = false;
     room.users.forEach((user) => {
       user.votes = 0;
       user.isVoted = false;
@@ -252,6 +253,7 @@ function openVotingModalAllHandler(ws, msg, aWss) {
       {
         $set: {
           users: room.users,
+          isDraw: false,
         },
       }
     ).clone();
@@ -308,7 +310,29 @@ function getVotingResultHandler(ws, msg, aWss) {
     let filteredResult = result.filter((user) => user.votes === maxVotes);
 
     if (filteredResult.length > 1) {
-      console.log('2+');
+      room.isDraw = true;
+      room.drawPlayers = filteredResult;
+      room.users.forEach((user) => {
+        user.votes = 0;
+        user.isVoted = false;
+      });
+
+      await Room.findOneAndUpdate(
+        { _id: msg.id },
+        {
+          $set: {
+            users: room.users,
+            isDraw: true,
+            drawPlayers: filteredResult,
+          },
+        }
+      ).clone();
+
+      broadcastConnection(ws, msg, aWss, {
+        room: room,
+        drawPlayers: drawPlayers,
+        method: 'draw',
+      });
     } else {
       room.users.forEach((user) => {
         if (user.userId === filteredResult[0].userId) {

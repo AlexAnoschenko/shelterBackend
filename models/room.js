@@ -6,6 +6,8 @@ const Room = new Schema({
   apocalypse: { type: Object },
   numberOfPlayers: { type: Number },
   isEndGame: { type: Boolean },
+  isDraw: { type: Boolean },
+  drawPlayers: { type: Array },
 });
 
 module.exports = new model('Room', Room);
